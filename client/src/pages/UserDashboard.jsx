@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import api from "../config/Api";
-
+import api from "../config/Api.jsx";
+import { useNavigate } from "react-router-dom";
 const UserDashboard = () => {
-  const { user, isLogin, setUser } = useAuth();
+   const { user, isLogin, setUser, setIsLogin } = useAuth();
+  const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -90,11 +92,21 @@ const UserDashboard = () => {
       }
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError(err.response?.data?.message || "Failed to update profile. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "Failed to update profile. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   };
+  const handleLogout = () => {
+    setUser(null);
+    sessionStorage.removeItem("AppUser");
+    setIsLogin(false);
+    navigate("/login");
+  };
+
 
   return (
      <div className="container mx-auto mt-10 mb-10 max-w-2xl">
@@ -194,12 +206,20 @@ const UserDashboard = () => {
           </div>
 
           {/* Edit Button */}
-          <button
-            onClick={handleEdit}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
-          >
-            Edit Profile
-          </button>
+           <div className="flex flex-col gap-4">
+            <button
+              onClick={handleEdit}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+            >
+              Edit Profile
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       ) : (
         // Edit Mode

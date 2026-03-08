@@ -1,5 +1,6 @@
 import express from "express";
-import { getAllUsers,updateProfile }   from "../controllers/userController.js";
+import { getAllUsers,updateProfile,fetchMessages,
+  sendMessage, }   from "../controllers/userController.js";
 import { Protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -7,5 +8,9 @@ const router = express.Router();
 // Get all users
 router.get("/allUsers",Protect, getAllUsers);
 router.put("/profile", Protect, updateProfile);
+router.get("/fetchMessages/:receiverId", Protect, fetchMessages);
+
+// send new Messages between 2 users
+router.post("/sendMessage/:receiverId", Protect, sendMessage);
 
 export default router;

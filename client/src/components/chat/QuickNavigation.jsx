@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { IoMdSettings } from "react-icons/io";
 
 const QuickNavigation = ({ setFetchMode, fetchMode }) => {
   const navigate = useNavigate();
@@ -24,12 +25,12 @@ const QuickNavigation = ({ setFetchMode, fetchMode }) => {
           </button>
         </div>
 
-        <div>
+         <div className="flex items-center justify-center p-4">
            <button
-            className="btn btn-ghost btn-sm w-full justify-start"
+            className="text-3xl transition hover:rotate-90 hover:text-accent duration-300"
             onClick={() => navigate("/userDashboard")}
           >
-            <span className="text-sm">PR</span>
+            <IoMdSettings />
           </button>
         </div>
       </div>

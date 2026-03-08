@@ -1,113 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-
-const DummyChatData = [
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Hi, how are you?",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "I am good! How about you?",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Doing well. Are you free today?",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Yes, mostly in the evening.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Great, we should catch up.",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Sure, what time works for you?",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Maybe around 6 PM?",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "6 PM sounds good.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Let's meet at the cafe near the office.",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Perfect, I like that place.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Did you finish the project work?",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Almost done, just a few things left.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Nice! Let me know if you need help.",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Thanks, I will.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Also, did you check the new tech article I shared?",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Yes, it was really interesting.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "The part about real-time apps was great.",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "True, especially the Socket.IO example.",
-  },
-  {
-    senderId: 1,
-    receiverId: 2,
-    message: "Exactly! I want to try building one.",
-  },
-  {
-    senderId: 2,
-    receiverId: 1,
-    message: "Let's discuss it in the evening then.",
-  },
-];
+import api from "../../config/api";
+import { useAuth } from "../../context/AuthContext";
 
 
 
-const ChatWindow = ({ receiver, setReceiver }) => {
+const ChatWindow = ({ receiver }) => {
+  const { user } = useAuth();
   const bottomRef = useRef(null);
+   const senderId = user?.id || 1; // Replace with actual logged-in user ID
+  const receiverId = receiver?._id || 2;
 
   const [messages, setMessages] = useState([]);
 
@@ -127,32 +29,44 @@ const ChatWindow = ({ receiver, setReceiver }) => {
     e.key === "Enter" && handleSend();
   };
 
-  const handleSend = () => {
+  const handleSend = async() => {
     //call Backend
 
     const messagePacket = {
-      senderId: 1,
-      receiverId: 2,
+      senderId,
+      receiverId,
       message: inputMessage,
     };
-    setMessages((prev) => [...prev, messagePacket]);
-    setInputMessage("");
+    try {
+      const res = await api.post(`/user/sendMessage/${receiverId}`, {
+        inputMessage,
+      });
+      setInputMessage("");
+      setMessages((prev) => [...prev, res.data.data]);
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Message Sending Failed");
+    }
+
+
   };
 
-  const fetchAllOldMessage = () => {
+  const fetchAllOldMessage = async() => {
     try {
-      setTimeout(() => {
-        setMessages(DummyChatData);
-      }, 5000);
+      const res = await api.get(`/user/fetchMessages/${receiverId}`);
+      setMessages(res.data.data);
     } catch (error) {
-      toast.error("Some Error");
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Error Fetching Messages");
     }
   };
 
   //on component Load
   useEffect(() => {
     setMessages([]);
-    fetchAllOldMessage();
+    if (receiver) {
+      fetchAllOldMessage();
+    }
   }, [receiver]);
 
 
@@ -187,10 +101,12 @@ const ChatWindow = ({ receiver, setReceiver }) => {
               messages.map((chat, idx) => (
                 <div
                   key={idx}
-                  className={`chat ${chat.senderId === 2 ? "chat-receiver" : "chat-sender"}`}
+                    className={`chat ${chat.senderId === receiverId ? "chat-receiver" : "chat-sender"}`}
                 >
                   <div className="chat-header text-base-content">
-                    {chat.senderId === 2 ? receiver.fullName : "Arpit Gupta"}
+                     {chat.senderId === receiverId
+                      ? receiver.fullName
+                      : user.fullName}
                   </div>
                   <div className="chat-bubble">{chat.message}</div>
 
@@ -217,9 +133,11 @@ const ChatWindow = ({ receiver, setReceiver }) => {
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <button className="btn btn-primary" onClick={handleSend}>
-              Send
-            </button>
+              <button
+              className="btn btn-primary disabled:bg-secondary"
+              onClick={handleSend}
+              disabled={inputMessage===""}
+            ></button>
           </div>
 
           <div className="text-center text-sm text-base-content/60 mt-1">

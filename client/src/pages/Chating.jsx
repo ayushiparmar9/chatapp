@@ -18,7 +18,7 @@ const Chating = () => {
           <ContactBar fetchMode={fetchMode} setReceiver={setReceiver} />
         </div>
         <div className="w-15/20 border-r-2 border-gray-300 overflow-hidden">
-          <ChatWindow receiver={receiver} setReceiver={setReceiver} />
+          <ChatWindow receiver={receiver}  />
         </div>
       </div>
     </>
