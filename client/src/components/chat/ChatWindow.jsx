@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 const DummyChatData = [
   {
@@ -103,7 +104,64 @@ const DummyChatData = [
   },
 ];
 
-const ChatWindow = ({ receiver }) => {
+
+
+const ChatWindow = ({ receiver, setReceiver }) => {
+  const bottomRef = useRef(null);
+
+  const [messages, setMessages] = useState([]);
+
+  const [inputMessage, setInputMessage] = useState("");
+
+  const scrolltoBottom = () => {
+    console.log(bottomRef);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  //On Every New Message
+  useEffect(() => {
+    scrolltoBottom();
+  }, [messages]);
+
+  const handleKeyDown = (e) => {
+    e.key === "Enter" && handleSend();
+  };
+
+  const handleSend = () => {
+    //call Backend
+
+    const messagePacket = {
+      senderId: 1,
+      receiverId: 2,
+      message: inputMessage,
+    };
+    setMessages((prev) => [...prev, messagePacket]);
+    setInputMessage("");
+  };
+
+  const fetchAllOldMessage = () => {
+    try {
+      setTimeout(() => {
+        setMessages(DummyChatData);
+      }, 5000);
+    } catch (error) {
+      toast.error("Some Error");
+    }
+  };
+
+  //on component Load
+  useEffect(() => {
+    setMessages([]);
+    fetchAllOldMessage();
+  }, [receiver]);
+
+
+
+
+
+
+
+
   if (!receiver) {
     return (
       <div className="p-2 h-full flex items-center justify-center">
@@ -119,32 +177,49 @@ const ChatWindow = ({ receiver }) => {
         <div className="border rounded-lg h-full p-2">
           <div className="bg-primary p-3 rounded-lg mb-2">
             <h2 className="text-lg font-bold text-primary-content">
-              {receiver.name}
+              {receiver.fullName}
             </h2>
           </div>
 
           <div className="h-4/5 overflow-y-auto p-2 border rounded-lg bg-accent/30">
             {/* Chat messages will go here */}
-            {DummyChatData.map((chat, idx) => (
-              <div
-                key={idx}
-                className={`chat ${chat.senderId === 2 ? "chat-receiver" : "chat-sender"}`}
-              >
-                <div className="chat-header text-base-content">
-                  {chat.senderId === 2 ? receiver.name : "Arpit Gupta"}
+            {messages.length > 0 ? (
+              messages.map((chat, idx) => (
+                <div
+                  key={idx}
+                  className={`chat ${chat.senderId === 2 ? "chat-receiver" : "chat-sender"}`}
+                >
+                  <div className="chat-header text-base-content">
+                    {chat.senderId === 2 ? receiver.fullName : "Arpit Gupta"}
+                  </div>
+                  <div className="chat-bubble">{chat.message}</div>
+
+            
                 </div>
-                <div className="chat-bubble">{chat.message}</div>
+                 ))
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                {" "}
+                Loading Chats ...
               </div>
-            ))}
+             )}
+
+            {/* Dummy div to scroll to bottom */}
+            <div ref={bottomRef} />
           </div>
 
           <div className="mt-2 flex gap-2">
             <input
               type="text"
+               value={inputMessage}
               placeholder="Type your message..."
               className="input input-bordered w-full"
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
-            <button className="btn btn-primary">Send</button>
+            <button className="btn btn-primary" onClick={handleSend}>
+              Send
+            </button>
           </div>
 
           <div className="text-center text-sm text-base-content/60 mt-1">
