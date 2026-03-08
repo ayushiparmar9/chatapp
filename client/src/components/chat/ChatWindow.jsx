@@ -1,14 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import api from "../../config/api";
+import api from "../../config/Api";
 import { useAuth } from "../../context/AuthContext";
+import socketAPI from "../../config/WebSocket";
 
 
 
 const ChatWindow = ({ receiver }) => {
   const { user } = useAuth();
   const bottomRef = useRef(null);
-   const senderId = user?.id || 1; // Replace with actual logged-in user ID
+   const senderId = user?._id || 1; // Replace with actual logged-in user ID
   const receiverId = receiver?._id || 2;
 
   const [messages, setMessages] = useState([]);
@@ -37,12 +38,14 @@ const ChatWindow = ({ receiver }) => {
       receiverId,
       message: inputMessage,
     };
+     const timestamp = new Date().toISOString();
     try {
-      const res = await api.post(`/user/sendMessage/${receiverId}`, {
-        inputMessage,
-      });
+      
       setInputMessage("");
-      setMessages((prev) => [...prev, res.data.data]);
+      setMessages((prev) => [
+        ...prev,
+        { ...messagePacket, createdAt: timestamp, updatedAt: timestamp },
+      ]);
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message || "Message Sending Failed");
@@ -136,7 +139,7 @@ const ChatWindow = ({ receiver }) => {
               <button
               className="btn btn-primary disabled:bg-secondary"
               onClick={handleSend}
-              disabled={inputMessage===""}
+              disabled={inputMessage === ""}
             ></button>
           </div>
 
