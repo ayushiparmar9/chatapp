@@ -4,26 +4,13 @@ import toast from "react-hot-toast";
 import api from "../config/Api";
 import { useGoogleAuth } from "../config/GoogleAuth";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const Login = () => {
+  const { setUser, setIsLogin } = useAuth();
   const navigate = useNavigate();
-const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
 
-  const handleGoogleSuccess = async (userData) => {
-    console.log("Google Login Data", userData);
-  };
-
-  const GoogleLogin = () => {
-    signInWithGoogle(handleGoogleSuccess, handleGoogleFailure);
-  };
-
-  const handleGoogleFailure = (error) => {
-    console.error("Google login failed:", error);
-    toast.error("Google login failed. Please try again.");
-  };
-
-
-
+  const { isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -32,6 +19,40 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
 
   const [Loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState({});
+
+  const handleGoogleSuccess = async (userData) => {
+    console.log("Google Login Data", userData);
+    setLoading(true);
+
+    try {
+      const res = await api.post("/auth/googleLogin", userData);
+
+      toast.success(res.data.message);
+
+      sessionStorage.setItem("AppUser", JSON.stringify(res.data.data));
+
+      setUser(res.data.data);
+      setIsLogin(true);
+
+      handleClearForm();
+
+      navigate("/chatting");
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleFailure = (error) => {
+    console.error("Google login failed:", error);
+    toast.error("Google login failed. Please try again.");
+  };
+
+  const GoogleLogin = () => {
+    signInWithGoogle(handleGoogleSuccess, handleGoogleFailure);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -85,11 +106,12 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
         JSON.stringify(res.data.data)
       );
 
+      setUser(res.data.data);
+      setIsLogin(true);
+
       navigate("/chatting");
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Login failed"
-      );
+      toast.error(error?.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -101,15 +123,14 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
 
-            {/* Header */}
             <h2 className="card-title text-3xl justify-center text-primary">
               Login
             </h2>
+
             <p className="text-center text-base-content/70 mb-6">
               Welcome back to ChatKaro 💬
             </p>
 
-            {/* Form */}
             <form
               onSubmit={handleSubmit}
               onReset={handleClearForm}
@@ -125,6 +146,7 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
                   disabled={isLoading}
                   className="input input-bordered w-full"
                 />
+
                 {validationError.email && (
                   <p className="text-error text-sm mt-1">
                     {validationError.email}
@@ -142,6 +164,7 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
                   disabled={isLoading}
                   className="input input-bordered w-full"
                 />
+
                 {validationError.password && (
                   <p className="text-error text-sm mt-1">
                     {validationError.password}
@@ -149,7 +172,6 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
                 )}
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3 pt-6">
                 <button
                   type="reset"
@@ -168,7 +190,8 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
                 </button>
               </div>
             </form>
-<div className="mt-4">
+
+            <div className="mt-4">
               {error ? (
                 <button
                   className="btn btn-outline btn-error font-sans flex items-center justify-center gap-2 w-full"
@@ -187,17 +210,11 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
                   {isLoading
                     ? "Loading..."
                     : isInitialized
-                      ? "Continue with Google"
-                      : "Google Auth Error"}
+                    ? "Continue with Google"
+                    : "Google Auth Error"}
                 </button>
               )}
             </div>
-
-
-
-
-
-
 
           </div>
         </div>
@@ -205,6 +222,7 @@ const {isLoading, error, isInitialized, signInWithGoogle } = useGoogleAuth();
         <p className="text-center text-sm text-base-content/60 mt-6">
           Secure login 🔐
         </p>
+
       </div>
     </div>
   );

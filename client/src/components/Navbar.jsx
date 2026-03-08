@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const Navbar = () => {
+  const { user, isLogin } = useAuth();
   const [theme, setTheme] = useState("");
    const navigate = useNavigate();
 
@@ -24,16 +26,41 @@ const Navbar = () => {
         <div>
           <span>Home</span>
           <span>About</span>
+          <Link to="/chatting"> Chat </Link>
         </div>
 
         <div className="flex gap-3">
-          <button className="btn btn-secondary" onClick={() => navigate("/login")} >Login</button>
-          <button className="btn btn-secondary" onClick={() => navigate("/Register")} >register</button>
+           {isLogin ? (
+            <div
+              className="flex items-center gap-3 cursor-pointer p-1 border border-primary hover:border-primary-content rounded-md transition"
+              onClick={() => navigate("/userDashboard")}
+            >
+              <span className="text-nowrap text-lg font-semibold">
+                Welcome,{" "}
+                {user?.fullName.split(" ")[0] || user?.email.split("@")[0]}
+              </span>
+            </div>
+          ) : (
+            <>
+              <button
+                className="btn-secondary1"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </button>
 
+              <button
+                className="btn btn-outline btn-sm px-5"
+                onClick={() => navigate("/register")}
+              >
+                Register
+              </button>
+            </>
+          )}
           <select
             name="theme"
             id="theme"
-            className="select"
+             className="select select-bordered select-sm max-w-32"
             onChange={handleThemeChange}
             value={theme}
           >
