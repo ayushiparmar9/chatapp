@@ -17,7 +17,7 @@ const ChatWindow = ({ receiver }) => {
   const [inputMessage, setInputMessage] = useState("");
 
   const scrolltoBottom = () => {
-    console.log(bottomRef);
+    // console.log(bottomRef);
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -40,18 +40,27 @@ const ChatWindow = ({ receiver }) => {
     };
      const timestamp = new Date().toISOString();
     try {
+      if (socketAPI.connected) {
+        socketAPI.emit("send", messagePacket);
+        setInputMessage("");
+        setMessages((prev) => [
+          ...prev,
+          { ...messagePacket, createdAt: timestamp, updatedAt: timestamp },
+        ]);
+      }
       
-      setInputMessage("");
-      setMessages((prev) => [
-        ...prev,
-        { ...messagePacket, createdAt: timestamp, updatedAt: timestamp },
-      ]);
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message || "Message Sending Failed");
     }
 
 
+  };
+
+
+  const handleReceiveMessage = (newMessagePack) => {
+    // console.log(newMessagePack);
+    setMessages((prev) => [...prev, newMessagePack]);
   };
 
   const fetchAllOldMessage = async() => {
@@ -66,12 +75,12 @@ const ChatWindow = ({ receiver }) => {
 
   //on component Load
   useEffect(() => {
-    setMessages([]);
-    if (receiver) {
-      fetchAllOldMessage();
-    }
-  }, [receiver]);
+    socketAPI.on("receive", handleReceiveMessage);
 
+    return () => {
+      socketAPI.off("receive", handleReceiveMessage);
+    };
+  }, [receiverId, handleReceiveMessage]);
 
 
 
@@ -109,7 +118,7 @@ const ChatWindow = ({ receiver }) => {
                   <div className="chat-header text-base-content">
                      {chat.senderId === receiverId
                       ? receiver.fullName
-                      : user.fullName}
+                      : user?.fullName}
                   </div>
                   <div className="chat-bubble">{chat.message}</div>
 

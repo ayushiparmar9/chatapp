@@ -13,11 +13,11 @@ const Chating = () => {
   const [receiver, setReceiver] = useState(null);
   useEffect(() => {
     if (user) {
-      socketAPI.emit("createPath", user._id);
+      socketAPI.emit("createPath", user?._id);
     }
 
     return () => {
-      socketAPI.emit("destroyPath", user._id);
+      socketAPI.emit("destroyPath", user?._id);
     };
   }, []);
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import api from "../../config/api";
+import api from "../../config/Api";
+import socketAPI from "../../config/WebSocket";
+import { GoDotFill } from "react-icons/go";
 
 const DummyRecentContact = [
   {
@@ -191,6 +193,7 @@ const DummyAllContact = [
 const ContactBar = ({ fetchMode, setReceiver }) => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState();
 
   const fetchContacts = async() => {
     // Simulate an API call with a delay
@@ -198,12 +201,12 @@ const ContactBar = ({ fetchMode, setReceiver }) => {
     try {
        let res;
       if (fetchMode === "RC") {
-        console.log("Calling recents");
+        // console.log("Calling recents");
         
         setContacts(DummyRecentContact);
 
       } else if (fetchMode === "AC") {
-        console.log("Calling All");
+        // console.log("Calling All");
         res = await api.get("/user/allUsers");
         setContacts(res.data.data);
       }
@@ -219,6 +222,26 @@ const ContactBar = ({ fetchMode, setReceiver }) => {
     // Simulate fetching contacts from an API when the component mounts
     fetchContacts();
   }, [fetchMode]);
+
+
+
+
+const handleOnlineUsers = (onlineList) => {
+    console.log(onlineList);
+
+    setOnlineUsers(onlineList);
+  };
+
+  useEffect(() => {
+    socketAPI.on("onlineUsers", handleOnlineUsers);
+
+    return () => {
+      socketAPI.off("onlineUsers", handleOnlineUsers);
+    };
+  }, [contacts, handleOnlineUsers]);
+
+
+
 
   if (loading || contacts.length === 0) {
     return (
@@ -236,14 +259,17 @@ const ContactBar = ({ fetchMode, setReceiver }) => {
           {contacts &&
             contacts.map((contact) => (
               <div
-                key={contact.id}
+                key={contact._id}
                 className="p-2 bg-accent hover:bg-primary transition-colors rounded-lg cursor-pointer"
                 onClick={() => {
                   setReceiver(contact);
                 }}
               >
-                <h3 className="font-semibold text-accent-content">
+                 <h3 className="font-semibold text-accent-content flex justify-between items-center">
                   {contact.fullName}
+                   {onlineUsers && onlineUsers[contact._id] && (
+                    <GoDotFill className="text-green-400" />
+                  )}
                 </h3>
                 <p className="text-sm text-accent-content">{contact.email}</p>
                 <p className="text-lg font-bold text-accent-content">
